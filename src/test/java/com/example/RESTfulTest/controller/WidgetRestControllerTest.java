@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.ArgumentMatchers.any;
 
@@ -107,8 +108,44 @@ class WidgetRestControllerTest {
     }
 
     @Test
-    @DisplayName("GET /rest/widget/1 ")
+    @DisplayName("PUT /rest/widget/1 - Not found")
+    void testUpdateWidgetNotFound() throws Exception {
+        doReturn(Optional.empty()).when(service).findById(1l);
+        Widget widgetToPost = new Widget("New Name Widget", "New Description Widget",8);
+
+        mockMvc.perform(put("/rest/widget/{id}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(widgetToPost))
+                        .header("if-match", 1))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("PUT /rest/widget/1")
     void testUpdateWidget() throws Exception {
+        Widget widgetToFindById = new Widget(1l, "Widget Name", "Description", 1);
+        Widget widgetToPost = new Widget("New Name Widget", "New Description Widget",8);
+        Widget widgetToReturn = new Widget(1L, "New Name Widget", "New Description Widget", 8);
+
+        doReturn(Optional.of(widgetToFindById)).when(service).findById(1l);
+        doReturn(widgetToReturn).when(service).save(any());
+
+        mockMvc.perform(put("/rest/widget/{id}", 1l)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(widgetToPost))
+                        .header("if-match", 1))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(header().string(HttpHeaders.LOCATION, "/rest/widget/1"))
+                .andExpect(jsonPath("$.id", is(1)))
+                .andExpect(jsonPath("$.name", is("New Name Widget")))
+                .andExpect(jsonPath("$.description", is("New Description Widget")))
+                .andExpect(jsonPath("$.version", is(8)));
+    }
+
+    @Test
+    @DisplayName("GET /rest/widget/1 ")
+    void testGetWidgetById() throws Exception {
         Widget widget = new Widget(1l, "Widget Name", "Description", 1);
         doReturn(Optional.of(widget)).when(service).findById(1l);
 

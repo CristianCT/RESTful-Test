@@ -95,7 +95,7 @@ public class WidgetRestController {
     }
 
     @PutMapping("/rest/proper/widget/{id}")
-    public ResponseEntity<Widget> updateWidgetProper(@RequestBody Widget widget, @PathVariable Long id, @RequestHeader("If-Match") Integer ifMatch) {
+    public ResponseEntity<Widget> updateWidgetProper(@RequestBody Widget widget, @PathVariable Long id, @RequestHeader(HttpHeaders.IF_MATCH) Integer ifMatch) {
         Optional<Widget> existingWidget = widgetService.findById(id);
         if (existingWidget.isPresent()) {
             if (ifMatch.equals(existingWidget.get().getVersion())) {
